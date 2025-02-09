@@ -17,7 +17,7 @@ You need to run docker build in a VM with Debian/Ubuntu in order to build the in
 If you're on mac, from the Linux VM:
 
 ```
-docker build --no-cache --progress=plain -t rootless-docker-ubuntu -f Dockerfile.ubuntu3 .
+docker build --no-cache --progress=plain -t rootless-docker-ubuntu -f Dockerfile.debian1 .
 
 docker run --rm -it rootless-docker-ubuntu /bin/sh
 

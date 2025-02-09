@@ -69,7 +69,9 @@ ENV HOME=/home/rootless \
 #    PATH=/usr/bin:$PATH
 #    PATH=/usr/local/bin:/home/jenkins/bin:$PATH \
 #    SKIP_IPTABLES=1
-
+#export ENV=HOME=/home/rootless
+#export XDG_RUNTIME_DIR=/home/rootless/.docker/run
+#export DOCKER_HOST=unix:///home/rootless/.docker/run/docker.sock
 
 RUN dockerd-rootless-setuptool.sh install --skip-iptables
 
