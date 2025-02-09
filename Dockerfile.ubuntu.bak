@@ -43,15 +43,15 @@ RUN set -eux; \
     adduser --disabled-password --uid=1000 --ingroup=rootless rootless; \
     adduser rootless docker
 
-#COPY ubuntu-entrypoint.sh /entrypoint.sh
-#RUN chmod +x /entrypoint.sh
+COPY ubuntu-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 RUN mkdir -p /home/rootless/.local/share/docker
 RUN chown -R rootless:rootless /home/rootless/.local/share/docker
 RUN mkdir /certs /certs/client && chmod 1777 /certs /certs/client
 
-#USER rootless
-#
-#RUN dockerd-rootless-setuptool.sh install --skip-iptables
-#
-#CMD ["/entrypoint.sh"]
+USER rootless
+
+RUN dockerd-rootless-setuptool.sh install --skip-iptables
+
+CMD ["/entrypoint.sh"]
