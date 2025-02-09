@@ -1,0 +1,87 @@
+FROM debian:bookworm
+# Pin version: Debian GNU/Linux 12 (bookworm)
+
+# Updating and installing basic packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  kmod \
+  dbus-user-session \
+  curl \
+  ca-certificates \
+  uidmap \
+  openssl \
+  gnupg \
+  gpg \
+  iproute2 \
+  slirp4netns \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /tmp/*
+
+#  slirp4netns \
+
+# Setting up Docker's repository and installing Docker packages
+
+RUN install -m 0755 -d /etc/apt/keyrings; \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg; \
+    chmod a+r /etc/apt/keyrings/docker.gpg; \
+    echo \
+      "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+      "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+     tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+RUN apt-get update && apt-get upgrade -y; \
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    #apt-get install -y docker-ce-cli docker-buildx-plugin
+    #apt-get install -y docker-ce-cli containerd.io docker-buildx-plugin
+
+# Installing a specific older version of docker-ce-rootless-extras to fix a known error
+RUN apt-get install --no-install-recommends -y docker-ce-rootless-extras=5:25.0.3-1~debian.12~bookworm --allow-downgrades
+
+# Configuring system settings for unprivileged Docker containers
+# this has to be run in the host if it's debian for some reason, maybe apparmor related
+# macOS docker desktop doesnt have the necessary kernel modules to build
+# sysctl -w kernel.unprivileged_userns_clone=1
+# sysctl -w user.max_user_namespaces=28633
+#RUN echo "kernel.unprivileged_userns_clone=1" >> /etc/sysctl.conf; \
+#    echo "user.max_user_namespaces=28633" >> /etc/sysctl.conf; \
+#    sysctl --system
+
+# Adding necessary system users and groups for Docker
+RUN set -eux; \
+    addgroup --system dockremap; \
+    adduser --system --no-create-home --ingroup=dockremap dockremap; \
+    echo 'dockremap:165536:65536' >> /etc/subuid; \
+    echo 'dockremap:165536:65536' >> /etc/subgid
+
+RUN set -eux; \
+    addgroup --system docker; \
+    addgroup --system --gid=1000 rootless; \
+    adduser --disabled-password --uid=1000 --ingroup=rootless rootless; \
+    adduser rootless docker
+
+# Setting up entry point and permissions
+COPY debian-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Configuring Docker's environment for rootless mode
+RUN mkdir -p /home/rootless/.local/share/docker
+RUN mkdir -p /home/rootless/.docker/run
+RUN chown -R rootless:rootless /home/rootless/.local/share/docker /home/rootless/.docker
+RUN mkdir /certs /certs/client && chmod 1777 /certs /certs/client
+
+USER rootless
+
+ENV HOME=/home/rootless \
+    XDG_RUNTIME_DIR=/home/rootless/.docker/run \
+    DOCKER_HOST=unix:////home/rootless/.docker/run/docker.sock \
+    PATH=/usr/bin:$PATH
+#    PATH=/usr/local/bin:/home/jenkins/bin:$PATH \
+#    SKIP_IPTABLES=1
+
+
+RUN dockerd-rootless-setuptool.sh install --skip-iptables
+
+#CMD ["/entrypoint.sh"]
+
+# /home/jenkins/.local/share/docker
+# /home/jenkins/.docker/run
+# ? /home/jenkins/.config/docker
