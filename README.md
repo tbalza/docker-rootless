@@ -4,7 +4,7 @@ Kaniko is currently not maintained, and has important limitations
 
 docker build uses Buildx and BuildKit by default since Docker Engine 23.0
 
-# MacOS Requirements
+## MacOS Requirements
 
 MacOS Docker Desktop cannot build an image with a Docker rootless mode setup
 
@@ -12,7 +12,7 @@ It uses a "LinuxKit" VM that doesn't have the necessary Linux kernel modules. Se
 
 You need to run docker build in a VM with Debian/Ubuntu in order to build the initial Dockerfile.
 
-# Quickstart
+## Quickstart
 
 If you're on mac, from the Linux VM:
 
@@ -25,7 +25,7 @@ docker run -rm -it rootless-docker-debian /bin/sh
     docker buildx version
 ```
 
-# End Result
+## End Result
 
 The resulting image is able to run docker build in a CI pipeline without root privileges inside kubernetes/ecs fargate
 ```
@@ -39,7 +39,7 @@ docker buildx build \
 --push
 ```
 
-# Documentation
+## Documentation
 
 https://docs.docker.com/engine/security/rootless/
 
